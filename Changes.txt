@@ -1,5 +1,129 @@
-simpleTAL / simpleTALES (Version 3.2)
+simpleTAL / simpleTALES (Version 3.10)
 -------------------------------------
+Version 3.10
+------------
+New features:
+ - Included API documentation and TAL reference guide with archive.
+ 
+Bug fixes:
+ - Attributes on repeat tags were not correctly kept for nested repeats.
+   (Thanks to Aadish Shrestha for the bug report)
+
+Version 3.9
+-----------
+This is release is focused on improving performance.  Compared to version 3.8
+the performance of expanding templates is ~45-70% faster.  The performance of parsing
+templates is unchanged.
+
+WARNING: IF you rely on the internal workings of SimpleTALES in your application then
+there will be changes that are required to make use of this version of SimpleTAL.  The API
+for SimpleTAL is however unchanged.
+
+New features:
+  - Introduced simpleTALUtils.FastStringOutput which can be used to capture the 
+    output of SimpleTAL in a faster manner than StringIO.
+  - Introduced simpleTALES.CachedFuncResult which can be used to wrap functions in
+    the Context, and which cache's the result of the function call to ensure that
+	the function is only called once during template expansion.
+  - TALES no longer wraps all results in ContextVariable instances when returning
+    values to TAL.
+  - Changed copy.copy to {}.copy for performance improvement.
+  - Removed logging.debug() calls from performance critical paths.
+  - Replaced DefaultVariable class with simpleTALES.DEFAULTVALUE
+  - Replaced NothingVariable class with None
+  - Removed NoCallVariable
+  - Removed isDefault, isNothing, isSequence, isCallable, and isTrue from ContextVariable.
+  
+
+Version 3.8
+-----------
+New features:
+  - Added new method getXMLTemplate to simpleTALUtils.TemplateCache
+  - Comments in XML templates are now included in the output if pyxml is
+    installed.
+  - Lists can now be indexed into.
+	
+Bug fixes:
+  - TAL commands on METAL namespaced elements and vice-versa now work correctly
+    (thanks to Kevin Smith for the bug report).
+  
+Version 3.7
+-----------
+New features:
+  - When non-ascii, non-Unicode strings are present in the Context a Unicode
+    error is thrown.  Now an ERROR log message indicates that this is the most
+    likely cause of the problem.
+    
+Bug fixes:
+  - Correction to cgi-example (thanks to Frank Wierzbicki for the patch).
+  - Local defines that reference earlier local defines on one tag now work.
+  - Using default values in a repeat list now work as expected.
+  - Errors during codec conversions will now use 'replace' rather than 'strict'
+  
+
+Version 3.6
+-----------
+
+New features:
+  - The XML Declaration can now be suppressed by passing 
+	suppressXMLDeclaration=1 to the template "expand" method.
+Bug fixes:
+  - Removed stray 'info' logging call.
+  
+Version 3.5
+-----------
+New features:
+  - The 'test' function is now available to code used in 'python:' paths.
+    Usage is the same as zope: test (test1,val1[,test2,val2][,default]).
+	(Thanks to Mark McEahern for the feature request)
+  - Uses PyXML (http://pyxml.sourceforge.net/) to determine the DOCTYPE of
+    XML templates (if installed).  (Thanks to Myers Carpenter for the 
+    implementation)
+Bug fixes:
+  - CGI Example fixes.
+  - XML Templates containing attributes with character entities are now
+    output correctly.
+  - HTML Templates with special characters as part of TAL or METAL commands
+    are now handled correctly.
+  - Default encoding is now iso-8859-1 rather than iso8859-1
+
+
+Version 3.4
+-----------
+New features:
+  - TemplateCache now uses MTIME rather than CTIME to spot
+    changes to templates.
+  - SimpleTAL is now compatible with PyXML 0.8.2 (Thanks to 
+    Myers Carpenter for the testing).
+  - Added support for passing in an XML Doctype when calling 
+	template.expand
+  - Added support to maintain XML singleton tags, including use of 
+    METAL and TAL on singleton tags.
+  - Added support for using variables in paths (e.g. If colour='blue' then
+	the path 'colourMap/?colour' is equivalent to 'colourMap/blue').  This 
+    is not part of the TALES specification, but is supported by Zope.
+	(Thanks to Bastian Kleineidam for the initial implementation).
+	
+Bug fixes:
+  - If the logging module was not installed exceptions would be thrown
+    when SimpleTAL attempted to log errors - fixed.
+
+Version 3.3
+-----------
+New features:
+  - TemplateCache now supports inputEncoding, allowing HTML templates using 
+    character sets other than ISO8859-1 to be used.
+  - Functions path, string, exists, and nocall are available to python: paths.
+  - Functions can now receive parameters via paths by wrapping them in 
+    simpleTALES.PathFunctionVariable before placing them into the Context.
+    
+Bug fixes:
+  - In tal:attributes and tal:define double escaped semi-colons are now handled.
+  - Space after a semi-colon in tal:attributes and tal:define is now handled
+    (thanks to Sean Reifschneider)
+  - Handling of stray quotes at the start and end of attributes shouldn't interfere
+    with python: paths anymore.
+
 Version 3.2
 -----------
 This release incorporates patches from Wichert Akkerman implementing the Python TAL path

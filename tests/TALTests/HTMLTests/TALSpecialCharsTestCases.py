@@ -1,9 +1,28 @@
 #!/usr/bin/python
-""" Copyright 2003 Colin Stewart (http://www.owlfish.com/)
+"""		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		All rights reserved.
 		
-		This code is made freely available for commercial and non-commercial use.
-		No warranties, expressed or implied, are made as to the fitness of this
-		code for any purpose.
+		Redistribution and use in source and binary forms, with or without
+		modification, are permitted provided that the following conditions
+		are met:
+		1. Redistributions of source code must retain the above copyright
+		   notice, this list of conditions and the following disclaimer.
+		2. Redistributions in binary form must reproduce the above copyright
+		   notice, this list of conditions and the following disclaimer in the
+		   documentation and/or other materials provided with the distribution.
+		3. The name of the author may not be used to endorse or promote products
+		   derived from this software without specific prior written permission.
+		
+		THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		
 		If you make any bug fixes or feature enhancements please let me know!
 		
@@ -24,7 +43,7 @@ else:
 	
 class TALSpecialCharsTestCases (unittest.TestCase):
 	def setUp (self):
-		self.context = simpleTALES.Context()
+		self.context = simpleTALES.Context(allowPythonPath=1)
 		self.context.addGlobal ('test', '< testing > experimenting & twice as useful')
 		self.context.addGlobal ('one', [1])
 		self.context.addGlobal ('two', ["one", "two"])
@@ -39,9 +58,14 @@ class TALSpecialCharsTestCases (unittest.TestCase):
 						
 	def testLessThanGreaterThanAmpersand (self):
 		self._runTest_ ('<html tal:content="test">Hello</html>'
-										,"<html>&lt; testing &gt; experimenting &amp; twice as useful</html>"
-										,"Less than, greater than or amperand were not encoded correctly")
-										
+						,"<html>&lt; testing &gt; experimenting &amp; twice as useful</html>"
+						,"Less than, greater than or amperand were not encoded correctly")
+						
+	def testEscapedPythonPaths (self):
+		self._runTest_ ('<html tal:content="python: str (2000 &lt;&lt; 1)">Hello</html>'
+						,"<html>4000</html>"
+						,"Python bit shift failed.")
+						
 if __name__ == '__main__':
 	unittest.main()
 

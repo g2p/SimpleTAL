@@ -1,10 +1,29 @@
 """ simpleTALUtils
 
-		Copyright 2003 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		All rights reserved.
 		
-		This code is made freely available for commercial and non-commercial
-		use.  No warranties, expressed or implied, are made as to the
-		fitness of this code for any purpose.
+		Redistribution and use in source and binary forms, with or without
+		modification, are permitted provided that the following conditions
+		are met:
+		1. Redistributions of source code must retain the above copyright
+		   notice, this list of conditions and the following disclaimer.
+		2. Redistributions in binary form must reproduce the above copyright
+		   notice, this list of conditions and the following disclaimer in the
+		   documentation and/or other materials provided with the distribution.
+		3. The name of the author may not be used to endorse or promote products
+		   derived from this software without specific prior written permission.
+		
+		THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		
 		If you make any bug fixes or feature enhancements please let me know!
 		
@@ -15,12 +34,10 @@
 		Module Dependencies: None
 """
 
-__version__ = "3.2"
-
-
 import StringIO, os, stat, threading, sys, codecs, sgmllib, cgi, re
+import simpletal, simpleTAL
 
-import simpleTAL
+__version__ = simpletal.__version__
 
 # This is used to check for already escaped attributes.
 ESCAPED_TEXT_REGEX=re.compile (r"\&\S+?;")
@@ -73,6 +90,20 @@ class HTMLStructureCleaner (sgmllib.SGMLParser):
 	def handle_entityref (self, ref):
 		self.outputFile.write (u'&%s;' % ref)
 		
+
+class FastStringOutput:
+	""" A very simple StringIO replacement that only provides write() and getvalue()
+		and is around 6% faster than StringIO.
+	"""
+	def __init__ (self):
+		self.data = []
+		
+	def write (self, data):
+		self.data.append (data)
+		
+	def getvalue (self):
+		return "".join (self.data)
+
 class TemplateCache:
 	""" A TemplateCache is a multi-thread safe object that caches compiled templates.
 			This cache only works with file based templates, the ctime of the file is 
@@ -84,30 +115,54 @@ class TemplateCache:
 		self.hits = 0
 		self.misses = 0
 		
-	def getTemplate (self, name):
+	def getTemplate (self, name, inputEncoding='ISO-8859-1'):
 		""" Name should be the path of a template file.  If the path ends in 'xml' it is treated
-				as an XML Template, otherwise it's treated as an HTML Template.  If the template file
-				has changed since the last cache it will be re-compiled.
+			as an XML Template, otherwise it's treated as an HTML Template.  If the template file
+			has changed since the last cache it will be re-compiled.
+			
+			inputEncoding is only used for HTML templates, and should be the encoding that the template
+			is stored in.
 		"""
 		if (self.templateCache.has_key (name)):
 			template, oldctime = self.templateCache [name]
-			ctime = os.stat (name)[stat.ST_CTIME]
+			ctime = os.stat (name)[stat.ST_MTIME]
 			if (oldctime == ctime):
 				# Cache hit!
 				self.hits += 1
 				return template
 		# Cache miss, let's cache this template
-		return self._cacheTemplate_ (name)
+		return self._cacheTemplate_ (name, inputEncoding)
 		
-	def _cacheTemplate_ (self, name):
+	def getXMLTemplate (self, name):
+		""" Name should be the path of an XML template file.  
+		"""
+		if (self.templateCache.has_key (name)):
+			template, oldctime = self.templateCache [name]
+			ctime = os.stat (name)[stat.ST_MTIME]
+			if (oldctime == ctime):
+				# Cache hit!
+				self.hits += 1
+				return template
+		# Cache miss, let's cache this template
+		return self._cacheTemplate_ (name, None, xmlTemplate=1)
+		
+	def _cacheTemplate_ (self, name, inputEncoding, xmlTemplate=0):
 		self.cacheLock.acquire ()
 		try:
 			tempFile = open (name, 'r')
-			if (name [-3:] == "xml"):
+			if (xmlTemplate):
+				# We know it is XML
 				template = simpleTAL.compileXMLTemplate (tempFile)
 			else:
-				template = simpleTAL.compileHTMLTemplate (tempFile)
-			self.templateCache [name] = (template, os.stat (name)[stat.ST_CTIME])
+				# We have to guess...
+				firstline = tempFile.readline()
+				tempFile.seek(0)
+				if (name [-3:] == "xml") or (firstline.strip ()[:5] == '<?xml') or (firstline [:9] == '<!DOCTYPE' and firstline.find('XHTML') != -1):
+					template = simpleTAL.compileXMLTemplate (tempFile)
+				else:
+					template = simpleTAL.compileHTMLTemplate (tempFile, inputEncoding)
+			tempFile.close()
+			self.templateCache [name] = (template, os.stat (name)[stat.ST_MTIME])
 			self.misses += 1
 		except Exception, e:
 			self.cacheLock.release()
@@ -223,11 +278,11 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 		self.movePCForward,self.movePCBack,self.outputTag,self.originalAttributes,self.currentAttributes,self.repeatVariable,self.repeatIndex,self.repeatSequence,self.tagContent,self.localVarsDefined = self.scopeStack.pop()			
 		self.programCounter += 1
 			
-def ExpandMacros (context, template, outputEncoding="ISO8859-1"):
+def ExpandMacros (context, template, outputEncoding="ISO-8859-1"):
 	out = StringIO.StringIO()
 	interp = MacroExpansionInterpreter()
 	interp.initialise (context, out)
-	template.expand (context, out, outputEncoding, interp)
+	template.expand (context, out, outputEncoding=outputEncoding, interpreter=interp)
 	# StringIO returns unicode, so we need to turn it back into native string
 	result = out.getvalue()
 	reencoder = codecs.lookup (outputEncoding)[0]

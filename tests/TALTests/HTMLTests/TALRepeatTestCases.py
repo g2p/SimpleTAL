@@ -1,9 +1,28 @@
 #!/usr/bin/python
-""" Copyright 2003 Colin Stewart (http://www.owlfish.com/)
+"""		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		All rights reserved.
 		
-		This code is made freely available for commercial and non-commercial use.
-		No warranties, expressed or implied, are made as to the fitness of this
-		code for any purpose.
+		Redistribution and use in source and binary forms, with or without
+		modification, are permitted provided that the following conditions
+		are met:
+		1. Redistributions of source code must retain the above copyright
+		   notice, this list of conditions and the following disclaimer.
+		2. Redistributions in binary form must reproduce the above copyright
+		   notice, this list of conditions and the following disclaimer in the
+		   documentation and/or other materials provided with the distribution.
+		3. The name of the author may not be used to endorse or promote products
+		   derived from this software without specific prior written permission.
+		
+		THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		
 		If you make any bug fixes or feature enhancements please let me know!
 		
@@ -30,12 +49,13 @@ class TALRepeatTestCases (unittest.TestCase):
 		self.context.addGlobal ('two', ["one", "two"])
 		self.context.addGlobal ('three', [1,"Two",3])
 		self.context.addGlobal ('emptyList', [])
-		self.context.addGlobal ('bigList', xrange (1,100))
+		self.context.addGlobal ('bigList', range (1,100))
 		self.context.addGlobal ('fourList', ["zero", "one", "two", "three"])
 		self.context.addGlobal ('nested', [{'title': 'Image 1', 'catList': [1,2,3]}
-												  ,{'title': 'Image 2', 'catList': [5,2,3]}
-												  ,{'title': 'Image 3', 'catList': [8,9,1]}
-												  ])
+										  ,{'title': 'Image 2', 'catList': [5,2,3], 'selected': simpleTALES.DEFAULTVALUE}
+										  ,{'title': 'Image 3', 'catList': [8,9,1]}
+										  ])
+		self.context.addGlobal ('defList', ["Hello", simpleTALES.DEFAULTVALUE, "World"])
 		
 	def _runTest_ (self, txt, result, errMsg="Error"):
 		template = simpleTAL.compileHTMLTemplate (txt)
@@ -59,22 +79,43 @@ class TALRepeatTestCases (unittest.TestCase):
 	
 	def testEmptyList (self):
 		self._runTest_ ('<html><p tal:repeat="short emptyList"><b tal:replace="short">Empty</b></p></html>'
-									,'<html></html>'
-									,'Empty list repeat failed.'
-									)
+								,'<html></html>'
+								,'Empty list repeat failed.'
+								)
 		
 	def testListRepeat (self):
 		self._runTest_ ('<html><p tal:repeat="word two"><b tal:replace="word"></b></p></html>', '<html><p>one</p><p>two</p></html>', 'Itteration over list failed.')
 		
 	def testTwoCmndsOneTagListRepeat (self):
 		self._runTest_ ('<html><p tal:repeat="word two" tal:content="word"></p></html>'
-									 ,'<html><p>one</p><p>two</p></html>'
-									 ,'Itteration over list with both content and repeat on same element failed.')
-		
+						 ,'<html><p>one</p><p>two</p></html>'
+						 ,'Itteration over list with both content and repeat on same element failed.')
+
+	def testAttributesInRepeat (self):
+		self._runTest_ ('<html><p tal:repeat="words nested" tal:content="words/title" tal:attributes="selected words/selected" selected></p></html>'
+						 ,'<html><p>Image 1</p><p selected="">Image 2</p><p>Image 3</p></html>'
+						 ,'Accessing attributes in repeat loop failed.')
+						 
+	def testDefaultInContentInRepeat (self):
+		self._runTest_ ('<html><p tal:repeat="words defList" tal:content="words">Default Word</p></html>'
+						 ,'<html><p>Hello</p><p>Default Word</p><p>World</p></html>'
+						 ,'Using default content in repeat loop failed.')
+						 
+	def testDefaultInReplaceInRepeat (self):
+		self._runTest_ ('<html><p tal:repeat="words defList" tal:replace="words">Default Word</p></html>'
+						 ,'<html>Hello<p>Default Word</p>World</html>'
+						 ,'Using default content in repeat loop failed.')
+
 	def testNestedRepeat (self):
 		self._runTest_ ('<html><p tal:repeat="image nested"><h2 tal:content="image/title"></h2><b tal:omit-tag tal:repeat="category image/catList"><i tal:content="category"></i></b></p></html>'
 					   ,'<html><p><h2>Image 1</h2><i>1</i><i>2</i><i>3</i></p><p><h2>Image 2</h2><i>5</i><i>2</i><i>3</i></p><p><h2>Image 3</h2><i>8</i><i>9</i><i>1</i></p></html>'
 					   ,'Nested repeat did not create expected outcome.'
+					   )
+					   
+	def testNestedRepeatClasses (self):
+		self._runTest_ ('<html><p class="outerClass" tal:repeat="image nested"><div class="innerClass" tal:repeat="category image/catList"><i tal:content="category"></i></div></p></html>'
+					   ,'<html><p class="outerClass"><div class="innerClass"><i>1</i></div><div class="innerClass"><i>2</i></div><div class="innerClass"><i>3</i></div></p><p class="outerClass"><div class="innerClass"><i>5</i></div><div class="innerClass"><i>2</i></div><div class="innerClass"><i>3</i></div></p><p class="outerClass"><div class="innerClass"><i>8</i></div><div class="innerClass"><i>9</i></div><div class="innerClass"><i>1</i></div></p></html>'
+					   ,'Nested repeat with classes did not create expected outcome.'
 					   )
 					   
 	def testNestedRepeatScope (self):

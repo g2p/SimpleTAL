@@ -1,9 +1,29 @@
 #!/usr/bin/python
-""" Copyright 2003 Colin Stewart (http://www.owlfish.com/)
+# -*- coding: iso-8859-1 -*-
+""" 	Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		All rights reserved.
 		
-		This code is made freely available for commercial and non-commercial use.
-		No warranties, expressed or implied, are made as to the fitness of this
-		code for any purpose.
+		Redistribution and use in source and binary forms, with or without
+		modification, are permitted provided that the following conditions
+		are met:
+		1. Redistributions of source code must retain the above copyright
+		   notice, this list of conditions and the following disclaimer.
+		2. Redistributions in binary form must reproduce the above copyright
+		   notice, this list of conditions and the following disclaimer in the
+		   documentation and/or other materials provided with the distribution.
+		3. The name of the author may not be used to endorse or promote products
+		   derived from this software without specific prior written permission.
+		
+		THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+		INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+		NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+		THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		
 		If you make any bug fixes or feature enhancements please let me know!
 		
@@ -27,7 +47,7 @@ This, though, is good: &pound;33!
 (That's £33!)
 </html>"""
 
-uniText = unicode (isoText, "iso8859-1")
+uniText = unicode (isoText, "iso-8859-1")
 
 cleanResultText = """<html>
 <h1>Some bad html follows</h1>
@@ -39,7 +59,7 @@ This, though, is good: &pound;33!
 (That's £33!)
 </html>"""
 
-cleanResult = unicode (cleanResultText, "iso8859-1")
+cleanResult = unicode (cleanResultText, "iso-8859-1")
 
 class HTMLStructureCleanerTestCases (unittest.TestCase):
 	def setUp (self):
@@ -54,7 +74,7 @@ class HTMLStructureCleanerTestCases (unittest.TestCase):
 						
 	def testCleaningISOString (self):
 		cleaner = simpleTALUtils.HTMLStructureCleaner ()
-		result = cleaner.clean (isoText, "iso8859-1")
+		result = cleaner.clean (isoText, "iso-8859-1")
 		self.failUnless (result == cleanResult, "Clean-up failed, expected:\n%s\n Got back:\n%s\n" % (cleanResult, result))
 		
 	def testCleaningUniString (self):
@@ -65,7 +85,7 @@ class HTMLStructureCleanerTestCases (unittest.TestCase):
 	def testCleaningISOStream (self):
 		cleaner = simpleTALUtils.HTMLStructureCleaner ()
 		isoStream = StringIO.StringIO (isoText)
-		result = cleaner.clean (isoStream, "iso8859-1")
+		result = cleaner.clean (isoStream, "iso-8859-1")
 		self.failUnless (result == cleanResult, "Clean-up failed, expected:\n%s\n Got back:\n%s\n" % (cleanResult, result))
 
 	def testCleaningUniStream (self):
