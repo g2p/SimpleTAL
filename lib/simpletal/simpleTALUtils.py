@@ -1,6 +1,6 @@
 """ simpleTALUtils
 
-		Copyright (c) 2005 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,12 @@
 		Module Dependencies: None
 """
 
-import StringIO, os, stat, threading, sys, codecs, sgmllib, cgi, re, types
-import simpletal, simpleTAL
+__version__ = "3.3"
 
-__version__ = simpletal.__version__
+
+import StringIO, os, stat, threading, sys, codecs, sgmllib, cgi, re
+
+import simpleTAL
 
 # This is used to check for already escaped attributes.
 ESCAPED_TEXT_REGEX=re.compile (r"\&\S+?;")
@@ -56,11 +58,11 @@ class HTMLStructureCleaner (sgmllib.SGMLParser):
 				The method returns a unicode string which is suitable for addition to a
 				simpleTALES.Context object.
 		"""
-		if (isinstance (content, types.StringType)):
+		if (type (content) == type ("")):
 			# Not unicode, convert
 			converter = codecs.lookup (encoding)[1]
 			file = StringIO.StringIO (converter (content)[0])
-		elif (isinstance (content, types.UnicodeType)):
+		elif (type (content) == type (u"")):
 			file = StringIO.StringIO (content)
 		else:
 			# Treat it as a file type object - and convert it if we have an encoding
@@ -90,20 +92,6 @@ class HTMLStructureCleaner (sgmllib.SGMLParser):
 	def handle_entityref (self, ref):
 		self.outputFile.write (u'&%s;' % ref)
 		
-
-class FastStringOutput:
-	""" A very simple StringIO replacement that only provides write() and getvalue()
-		and is around 6% faster than StringIO.
-	"""
-	def __init__ (self):
-		self.data = []
-		
-	def write (self, data):
-		self.data.append (data)
-		
-	def getvalue (self):
-		return "".join (self.data)
-
 class TemplateCache:
 	""" A TemplateCache is a multi-thread safe object that caches compiled templates.
 			This cache only works with file based templates, the ctime of the file is 
@@ -115,7 +103,7 @@ class TemplateCache:
 		self.hits = 0
 		self.misses = 0
 		
-	def getTemplate (self, name, inputEncoding='ISO-8859-1'):
+	def getTemplate (self, name, inputEncoding='ISO8859-1'):
 		""" Name should be the path of a template file.  If the path ends in 'xml' it is treated
 			as an XML Template, otherwise it's treated as an HTML Template.  If the template file
 			has changed since the last cache it will be re-compiled.
@@ -125,7 +113,7 @@ class TemplateCache:
 		"""
 		if (self.templateCache.has_key (name)):
 			template, oldctime = self.templateCache [name]
-			ctime = os.stat (name)[stat.ST_MTIME]
+			ctime = os.stat (name)[stat.ST_CTIME]
 			if (oldctime == ctime):
 				# Cache hit!
 				self.hits += 1
@@ -133,36 +121,15 @@ class TemplateCache:
 		# Cache miss, let's cache this template
 		return self._cacheTemplate_ (name, inputEncoding)
 		
-	def getXMLTemplate (self, name):
-		""" Name should be the path of an XML template file.  
-		"""
-		if (self.templateCache.has_key (name)):
-			template, oldctime = self.templateCache [name]
-			ctime = os.stat (name)[stat.ST_MTIME]
-			if (oldctime == ctime):
-				# Cache hit!
-				self.hits += 1
-				return template
-		# Cache miss, let's cache this template
-		return self._cacheTemplate_ (name, None, xmlTemplate=1)
-		
-	def _cacheTemplate_ (self, name, inputEncoding, xmlTemplate=0):
+	def _cacheTemplate_ (self, name, inputEncoding):
 		self.cacheLock.acquire ()
 		try:
 			tempFile = open (name, 'r')
-			if (xmlTemplate):
-				# We know it is XML
+			if (name [-3:] == "xml"):
 				template = simpleTAL.compileXMLTemplate (tempFile)
 			else:
-				# We have to guess...
-				firstline = tempFile.readline()
-				tempFile.seek(0)
-				if (name [-3:] == "xml") or (firstline.strip ()[:5] == '<?xml') or (firstline [:9] == '<!DOCTYPE' and firstline.find('XHTML') != -1):
-					template = simpleTAL.compileXMLTemplate (tempFile)
-				else:
-					template = simpleTAL.compileHTMLTemplate (tempFile, inputEncoding)
-			tempFile.close()
-			self.templateCache [name] = (template, os.stat (name)[stat.ST_MTIME])
+				template = simpleTAL.compileHTMLTemplate (tempFile, inputEncoding)
+			self.templateCache [name] = (template, os.stat (name)[stat.ST_CTIME])
 			self.misses += 1
 		except Exception, e:
 			self.cacheLock.release()
@@ -216,13 +183,13 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 		
 	def cmdOutputStartTag (self, command, args):
 		newAtts = []
-		for att, value in self.originalAttributes.items():
-			if (self.macroArg is not None and att == "metal:define-macro"):
+		for att in self.originalAttributes:
+			if (self.macroArg is not None and att[0] == "metal:define-macro"):
 				newAtts.append (("metal:use-macro",self.macroArg))
-			elif (self.inMacro and att=="metal:define-slot"):
-				newAtts.append (("metal:fill-slot", value))
+			elif (self.inMacro and att[0]=="metal:define-slot"):
+				newAtts.append (("metal:fill-slot", att[1]))
 			else:
-				newAtts.append ((att, value))
+				newAtts.append (att)
 		self.macroArg = None
 		self.currentAttributes = newAtts
 		simpleTAL.TemplateInterpreter.cmdOutputStartTag (self, command, args)
@@ -251,16 +218,16 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 					# End of the macro
 					self.inMacro = 0
 				else:
-					if (isinstance (resultVal, types.UnicodeType)):
+					if (type (resultVal) == type (u"")):
 						self.file.write (resultVal)
-					elif (isinstance (resultVal, types.StringType)):
+					elif (type (resultVal) == type ("")):
 						self.file.write (unicode (resultVal, 'ascii'))
 					else:
 						self.file.write (unicode (str (resultVal), 'ascii'))
 			else:
-				if (isinstance (resultVal, types.UnicodeType)):
+				if (type (resultVal) == type (u"")):
 					self.file.write (cgi.escape (resultVal))
-				elif (isinstance (resultVal, types.StringType)):
+				elif (type (resultVal) == type ("")):
 					self.file.write (cgi.escape (unicode (resultVal, 'ascii')))
 				else:
 					self.file.write (cgi.escape (unicode (str (resultVal), 'ascii')))
@@ -275,14 +242,14 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 		if (self.localVarsDefined):
 			self.context.popLocals()
 			
-		self.movePCForward,self.movePCBack,self.outputTag,self.originalAttributes,self.currentAttributes,self.repeatVariable,self.tagContent,self.localVarsDefined = self.scopeStack.pop()			
+		self.movePCForward,self.movePCBack,self.outputTag,self.originalAttributes,self.currentAttributes,self.repeatVariable,self.repeatIndex,self.repeatSequence,self.tagContent,self.localVarsDefined = self.scopeStack.pop()			
 		self.programCounter += 1
 			
-def ExpandMacros (context, template, outputEncoding="ISO-8859-1"):
+def ExpandMacros (context, template, outputEncoding="ISO8859-1"):
 	out = StringIO.StringIO()
 	interp = MacroExpansionInterpreter()
 	interp.initialise (context, out)
-	template.expand (context, out, outputEncoding=outputEncoding, interpreter=interp)
+	template.expand (context, out, outputEncoding, interp)
 	# StringIO returns unicode, so we need to turn it back into native string
 	result = out.getvalue()
 	reencoder = codecs.lookup (outputEncoding)[0]

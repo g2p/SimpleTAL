@@ -1,6 +1,5 @@
 #!/usr/bin/python
-# -*- coding: iso-8859-1 -*-
-""" 	Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+""" 	Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -47,7 +46,7 @@ This, though, is good: &pound;33!
 (That's £33!)
 </html>"""
 
-uniText = unicode (isoText, "iso-8859-1")
+uniText = unicode (isoText, "iso8859-1")
 
 cleanResultText = """<html>
 <h1>Some bad html follows</h1>
@@ -59,7 +58,7 @@ This, though, is good: &pound;33!
 (That's £33!)
 </html>"""
 
-cleanResult = unicode (cleanResultText, "iso-8859-1")
+cleanResult = unicode (cleanResultText, "iso8859-1")
 
 class HTMLStructureCleanerTestCases (unittest.TestCase):
 	def setUp (self):
@@ -74,7 +73,7 @@ class HTMLStructureCleanerTestCases (unittest.TestCase):
 						
 	def testCleaningISOString (self):
 		cleaner = simpleTALUtils.HTMLStructureCleaner ()
-		result = cleaner.clean (isoText, "iso-8859-1")
+		result = cleaner.clean (isoText, "iso8859-1")
 		self.failUnless (result == cleanResult, "Clean-up failed, expected:\n%s\n Got back:\n%s\n" % (cleanResult, result))
 		
 	def testCleaningUniString (self):
@@ -85,7 +84,7 @@ class HTMLStructureCleanerTestCases (unittest.TestCase):
 	def testCleaningISOStream (self):
 		cleaner = simpleTALUtils.HTMLStructureCleaner ()
 		isoStream = StringIO.StringIO (isoText)
-		result = cleaner.clean (isoStream, "iso-8859-1")
+		result = cleaner.clean (isoStream, "iso8859-1")
 		self.failUnless (result == cleanResult, "Clean-up failed, expected:\n%s\n Got back:\n%s\n" % (cleanResult, result))
 
 	def testCleaningUniStream (self):

@@ -1,6 +1,6 @@
 """ simpleTALES Implementation
 
-		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,6 @@ class DummyLogger:
 
 	def warn (self, *args):
 		pass
-		
-	def error (self, *args):
-		pass
 
 	def critical (self, *args):
 		pass
@@ -50,17 +47,4 @@ class DummyLogger:
 def getLogger (*params):
 	return DummyLogger()
 	
-def debug (*args):
-	pass
-		
-def info (*args):
-	pass
-
-def warn (*args):
-	pass
 	
-def error (*args):
-	pass
-
-def critical (*args):
-	pass

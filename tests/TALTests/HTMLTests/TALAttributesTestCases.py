@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+"""		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,6 @@ class TALAttributesTestCases (unittest.TestCase):
 		self.context.addGlobal ('test', 'testing')
 		self.context.addGlobal ('link', 'www.owlfish.com')
 		self.context.addGlobal ('needsQuoting', """Does "this" work?""")
-		self.context.addGlobal ('number', 5)
-		self.context.addGlobal ('uniQuote', u'Does "this" work?')
-		self.context.addGlobal ('anotherdefault', {'inhere': simpleTALES.DEFAULTVALUE})
 		
 	def _runTest_ (self, txt, result, errMsg="Error"):
 		template = simpleTAL.compileHTMLTemplate (txt)
@@ -72,11 +69,6 @@ class TALAttributesTestCases (unittest.TestCase):
 		self._runTest_ ('<html class="test" tal:attributes="href default" href="owlfish.com">Hello</html>'
 										,'<html class="test" href="owlfish.com">Hello</html>'
 										,"Defaulting of attribute 'href' failed.")
-										
-	def testAnotherDefaultAttribute (self):
-		self._runTest_ ('<html class="test" tal:attributes="href anotherdefault/inhere" href="owlfish.com">Hello</html>'
-										,'<html class="test" href="owlfish.com">Hello</html>'
-										,"Defaulting of attribute 'href' failed.")
 
 	def testMultipleAttributes (self):
 		self._runTest_ ('<html old="still here" class="test" tal:attributes="href default;class nothing;new test" href="owlfish.com">Hello</html>'
@@ -89,44 +81,16 @@ class TALAttributesTestCases (unittest.TestCase):
 										,"Setting multiple attributes at once, with spaces between semi-colons, failed.")
 
 	def testMultipleAttributesEscaped (self):
-		self._runTest_ ('<html old="still &quot; here" class="test" tal:attributes="href default ; class string: Semi-colon;;test;new test " href="owlfish.com">Hello</html>'
-										,'<html class="Semi-colon;test" new="testing" old="still &quot; here" href="owlfish.com">Hello</html>'
+		self._runTest_ ('<html old="still here" class="test" tal:attributes="href default ; class string: Semi-colon;;test;new test " href="owlfish.com">Hello</html>'
+										,'<html class="Semi-colon;test" new="testing" old="still here" href="owlfish.com">Hello</html>'
 										,"Setting multiple attributes at once, with spaces between semi-colons, failed.")
 
 	def testAttributeEscaping (self):
 		self._runTest_ ('<html existingAtt="&quot;Testing&quot;" tal:attributes="href needsQuoting">Hello</html>'
 										,"""<html href="Does &quot;this&quot; work?" existingatt="&quot;Testing&quot;">Hello</html>"""
 										,"Escaping of new attributes failed.")
-										
-	def testNumberAttributeEscaping (self):
-		self._runTest_ ('<html existingAtt="&quot;Testing&quot;" tal:attributes="href number">Hello</html>'
-						,"""<html href="5" existingatt="&quot;Testing&quot;">Hello</html>"""
-						,"Escaping of new attributes failed.")
 		
-	def testNumberAttributeEscaping (self):
-		self._runTest_ ('<html existingAtt="&quot;Testing&quot;" tal:attributes="href uniQuote">Hello</html>'
-						,"""<html href="Does &quot;this&quot; work?" existingatt="&quot;Testing&quot;">Hello</html>"""
-						,"Escaping of new attributes failed.")
 						
-	def testOriginalAttributes (self):
-		self._runTest_ ('<html existingAtt="&quot;Testing&quot;" tal:attributes="newAtt attrs/existingatt" tal:content="attrs/existingatt">Hello</html>'
-						,"""<html newAtt="&quot;Testing&quot;" existingatt="&quot;Testing&quot;">"Testing"</html>"""
-						,"Accessing existing attributes failed.")
-						
-	def testMultipleOriginalAttributes (self):
-		self._runTest_ ('<html one="Value One" two="Value two" three="Value three" tal:attributes="four attrs/three" tal:content="attrs/one">Hello</html>'
-						,"""<html four="Value three" one="Value One" two="Value two" three="Value three">Value One</html>"""
-						,"Accessing multiple existing attributes failed.")
-						
-	# HTML Attributes are case insensitive.
-#=======================================
-#	def testAttributeCase (self):
-#		self._runTest_ ('<html HREF="Testing" tal:attributes="HREF test">Hello</html>'
-#						,"""<html href="testing">Hello</html>"""
-#						,"HTML Attributes not treated as case insensitive.")
-#=======================================
-	
-
 
 if __name__ == '__main__':
 	unittest.main()

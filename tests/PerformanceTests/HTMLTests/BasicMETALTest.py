@@ -1,4 +1,4 @@
-"""		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+"""		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ macTemplate = simpleTAL.compileHTMLTemplate (macroTemplate)
 context.addGlobal ("macTemp", macTemplate)
 
 def METALTime (count, template):
-	file = simpleTALUtils.FastStringOutput()
+	file = StringIO.StringIO ()
 	start = time.clock()
 	for attempt in xrange (count):
 		template.expand (context, file)

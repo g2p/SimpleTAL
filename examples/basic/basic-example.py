@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ Example TAL program
 
-		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ from simpletal import simpleTAL, simpleTALES
 import sys
 
 # Creat the context that is used by the template
-context = simpleTALES.Context(allowPythonPath=1)
+context = simpleTALES.Context()
 
 # Add a string to the context under the variable title
 context.addGlobal ("title", "Colours of the rainbow")

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+"""		Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ else:
 	
 class TALSpecialCharsTestCases (unittest.TestCase):
 	def setUp (self):
-		self.context = simpleTALES.Context(allowPythonPath=1)
+		self.context = simpleTALES.Context()
 		self.context.addGlobal ('test', '< testing > experimenting & twice as useful')
 		self.context.addGlobal ('one', [1])
 		self.context.addGlobal ('two', ["one", "two"])
@@ -58,14 +58,9 @@ class TALSpecialCharsTestCases (unittest.TestCase):
 						
 	def testLessThanGreaterThanAmpersand (self):
 		self._runTest_ ('<html tal:content="test">Hello</html>'
-						,"<html>&lt; testing &gt; experimenting &amp; twice as useful</html>"
-						,"Less than, greater than or amperand were not encoded correctly")
-						
-	def testEscapedPythonPaths (self):
-		self._runTest_ ('<html tal:content="python: str (2000 &lt;&lt; 1)">Hello</html>'
-						,"<html>4000</html>"
-						,"Python bit shift failed.")
-						
+										,"<html>&lt; testing &gt; experimenting &amp; twice as useful</html>"
+										,"Less than, greater than or amperand were not encoded correctly")
+										
 if __name__ == '__main__':
 	unittest.main()
 

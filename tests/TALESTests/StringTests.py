@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" 	Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+""" 	Copyright (c) 2003 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ class StringTests (unittest.TestCase):
 								   ,'<html>Thought - Hello</html>'
 								   ,'Unicode test variable failed.'
 								   )								   
-
+					   
 	def testSinglePath (self):
 		self._runTest_ ('<html tal:content="string:${top}">Exists</html>'
 					   ,'<html>Hello from the top</html>'
@@ -157,12 +157,6 @@ class StringTests (unittest.TestCase):
 		self._runTest_ ('<html tal:content="string:$$A trailing $$dollar: $$">Exists</html>'
 					   ,'<html>$A trailing $dollar: $</html>'
 					   ,'No such path failed.'
-					   )
-					   
-	def testPartialMissing (self):
-		self._runTest_ ('<html tal:content="string: First bit here: ${alt} second bit not: ${nosuchname} there.">Exists</html>'
-					   ,'<html>First bit here: Wobble the way second bit not:  there.</html>'
-					   ,'Combination of non-existant variable and existing test failed.'
 					   )
 					   
 if __name__ == '__main__':
