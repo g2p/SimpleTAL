@@ -1,0 +1,69 @@
+simpleTAL / simpleTALES (Version 3.0)
+-------------------------------------
+
+Version 3.0
+-----------
+New features:
+  - METAL Support added
+  - The TAL and METAL name-spaces can now be bound to any prefix
+  - When using XML Templates any elements in the TAL or METAL name-space
+    have their start and end tags suppressed.
+
+Version 2.3
+-----------
+Bug fixes:
+  - Using tal:repeat on empty lists would cause an exception to be thrown.
+    Now the repeating elements are removed from the output.
+
+Version 2.2
+-----------
+Bug fixes:
+	- HTML Document type declarations were not being passed through from the template
+	- HTML Comments are now passed through to the output
+	- End tags with no start tag now raise an error rather than failing silently
+	- The first text element in a template is now combined with other text elements
+	- XML Processing Instructions are now passed through the template correctly.
+
+Version 2.1
+-----------
+Bug fixes:
+	- HTML Templates will now suppress the output of close tags for elements
+		that are forbidden to have them in HTML 4.01.  Additionally tags that 
+		can have no close tag in HTML can still have TAL attributes.  This means
+		that HTML templates can still be valid HTML, and produce valid HTML.
+		For example:
+		'<html><img tal:attributes="src imgSrc"></html>' is now valid, and will only
+		output the <img> tag.
+	
+New features:
+  - A simplification of how local variables are handled brings a 5-10%
+    performance gain
+
+Version 2.0
+-----------
+Complete refactoring of simpleTAL leading to very significant performance
+improvements.  
+
+Bug fixes:
+  - Any unknown entity references present in a HTML template were not passed
+    through to the rendered template, now they are.
+  - Attributes created using tal:attributes did not have their values escaped
+    properly
+
+New features:
+  - Large performance improvements by splitting the process into two
+  - Templates once compiled can now be re-used, leading to large performance
+    gains
+
+Version 1.1
+-----------
+Bug fixes:
+	- The "structure" keyword when used in XML templates would fail with an exception.
+	
+New features:
+	- Added test cases for TALES and TAL (both HTML and XML)
+	- Added allowTALInStructure flag to control expansion of TAL attributes
+
+Version 1.0
+-----------
+Initial release.
