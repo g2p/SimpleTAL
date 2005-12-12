@@ -1,6 +1,6 @@
 """ simpleTALES Implementation
 
-		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2005 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -33,18 +33,26 @@
 		Module Dependencies: logging
 """
 
+import types, sys
+
 try:
 	import logging
 except:
 	import DummyLogger as logging
 	
-import simpletal
+import simpletal, simpleTAL
 
 __version__ = simpletal.__version__
 
 DEFAULTVALUE = "This represents a Default value."
 
 class PathNotFoundException (Exception):
+	pass
+	
+class ContextContentException (Exception):
+	""" This is raised when invalid content has been placed into the Context object.
+		For example using non-ascii characters instead of Unicode strings.
+	"""
 	pass
 	
 PATHNOTFOUNDEXCEPTION = PathNotFoundException()
@@ -80,8 +88,13 @@ class RepeatVariable (ContextVariable):
 	def rawValue (self):
 		return self.value()
 		
+	def getCurrentValue (self):
+		return self.sequence [self.position]
+		
 	def increment (self):
 		self.position += 1
+		if (self.position == len (self.sequence)):
+			raise IndexError ("Repeat Finished")
 		
 	def createMap (self):
 		self.map = {}
@@ -166,6 +179,51 @@ class RepeatVariable (ContextVariable):
 		
 	def getUpperRoman (self):
 		return self.getLowerRoman().upper()
+		
+class IteratorRepeatVariable (RepeatVariable):
+	def __init__ (self, sequence):
+		RepeatVariable.__init__ (self, sequence)
+		self.curValue = None
+		self.iterStatus = 0
+	
+	def getCurrentValue (self):
+		if (self.iterStatus == 0):
+			self.iterStatus = 1
+			try:
+				self.curValue = self.sequence.next()
+			except StopIteration, e:
+				self.iterStatus = 2
+				raise IndexError ("Repeat Finished")
+		return self.curValue
+		
+	def increment (self):
+		# Need this for the repeat variable functions.
+		self.position += 1
+		try:
+			self.curValue = self.sequence.next()
+		except StopIteration, e:
+			self.iterStatus = 2
+			raise IndexError ("Repeat Finished")
+			
+	def createMap (self):
+		self.map = {}
+		self.map ['index'] = self.getIndex
+		self.map ['number'] = self.getNumber
+		self.map ['even'] = self.getEven
+		self.map ['odd'] = self.getOdd
+		self.map ['start'] = self.getStart
+		self.map ['end'] = self.getEnd
+		# TODO: first and last need to be implemented.
+		self.map ['length'] = sys.maxint
+		self.map ['letter'] = self.getLowerLetter
+		self.map ['Letter'] = self.getUpperLetter
+		self.map ['roman'] = self.getLowerRoman
+		self.map ['Roman'] = self.getUpperRoman
+		
+	def getEnd (self):
+		if (self.iterStatus == 2):
+			return 1
+		return 0
 		
 class PathFunctionVariable (ContextVariable):
 	def __init__ (self, func):
@@ -450,14 +508,18 @@ class Context:
 							if (endPos > 0):
 								path = expr[position + 2:endPos]
 								# Evaluate the path - missing paths raise exceptions as normal.
-								pathResult = self.evaluate (path)
+								try:
+									pathResult = self.evaluate (path)
+								except PathNotFoundException, e:
+									# This part of the path didn't evaluate to anything - leave blank
+									pathResult = u''
 								if (pathResult is not None):
-									if (type (pathResult) == type (u"")):
+									if (isinstance (pathResult, types.UnicodeType)):
 										result += pathResult
-									elif (type (pathResult) == type ("")):
-										result += unicode (pathResult, 'ascii')
 									else:
-										result += unicode (str (pathResult), 'ascii')
+										# THIS IS NOT A BUG!
+										# Use Unicode in Context if you aren't using Ascii!
+										result += unicode (pathResult)
 								skipCount = endPos - position 
 						else:
 							# It's a variable
@@ -466,14 +528,18 @@ class Context:
 								endPos = len (expr)
 							path = expr [position + 1:endPos]
 							# Evaluate the variable - missing paths raise exceptions as normal.
-							pathResult = self.traversePath (path)
+							try:
+								pathResult = self.traversePath (path)
+							except PathNotFoundException, e:
+								# This part of the path didn't evaluate to anything - leave blank
+								pathResult = u''
 							if (pathResult is not None):
-								if (type (pathResult) == type (u"")):
+								if (isinstance (pathResult, types.UnicodeType)):
 										result += pathResult
-								elif (type (pathResult) == type ("")):
-									result += unicode (pathResult, 'ascii')
 								else:
-									result += unicode (str (pathResult), 'ascii')
+									# THIS IS NOT A BUG!
+									# Use Unicode in Context if you aren't using Ascii!
+									result += unicode (pathResult)
 							skipCount = endPos - position - 1
 					except IndexError, e:
 						# Trailing $ sign - just suppress it

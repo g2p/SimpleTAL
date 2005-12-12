@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" 	Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+""" 	Copyright (c) 20045Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,17 @@
 		Unit test cases.
 		
 """
+
 import unittest, os
 import StringIO
 import logging, logging.config
+
+try:
+	from simpletal import simpleElementTree
+	
+	ELEMENT_TREE_SUPPORT = 1
+except:
+	ELEMENT_TREE_SUPPORT = 0
 
 from simpletal import simpleTAL, simpleTALES
 
@@ -40,71 +48,51 @@ if (os.path.exists ("logging.ini")):
 else:
 	logging.basicConfig()
 
-def simpleFunction ():
-	return "Hello World"
+def simpleFunction (param):
+	return "Hello %s" % param
 	
-def nestedFunction ():
-	return {'nest': simpleFunction}
-	
-class ExistsTests (unittest.TestCase):
+def helloFunction ():
+	return "Hello"
+				
+class ElementTreeTestCases (unittest.TestCase):
 	def setUp (self):
-		self.context = simpleTALES.Context()
+		pass
+			
+	def _runTest_ (self, txt, result, errMsg="Error", allowPythonPath=0):
+		if (not ELEMENT_TREE_SUPPORT):
+			logging.warn ("No ElementTree support found, skipping test.")
+			return
+			
+		self.context = simpleTALES.Context(allowPythonPath=allowPythonPath)
 		self.context.addGlobal ('top', 'Hello from the top')
-		self.context.addGlobal ('alt', 'Wobble the way')
-		self.context.addGlobal ('theMap', {'top': 'Hello', 'onelevel': {'top': 'Bye'}})
-		self.context.addGlobal ('funcMap', {'simple': simpleFunction, 'nested': nestedFunction})
-		self.context.addGlobal ('topFunc', simpleFunction)
+		self.context.addGlobal ('helloFunc', simpleFunction)
+		self.context.addGlobal ('helloPath', simpleTALES.PathFunctionVariable(simpleFunction))
+		self.context.addGlobal ('helloFunction', helloFunction)
+		self.context.addGlobal ('myList', [1,2,3,4,5,6])
+		self.context.addGlobal ('testing', 'testing')
+		self.context.addGlobal ('map', {'test': 'maptest'})
+		self.context.addGlobal ('data', {'one': 1, 'zero': 0})
 		
-	def _runTest_ (self, txt, result, errMsg="Error"):
+		testXML = '<?xml version="1.0" encoding="utf-8"?><root><title type="Example">This is a test</title></root>'
+		xmlTree = simpleElementTree.parseFile (StringIO.StringIO (testXML))
+		self.context.addGlobal ("xml", xmlTree)
+		
 		template = simpleTAL.compileHTMLTemplate (txt)
 		file = StringIO.StringIO ()
 		template.expand (self.context, file)
 		realResult = file.getvalue()
 		self.failUnless (realResult == result, "%s - \npassed in: %s \ngot back %s \nexpected %s\n\nTemplate: %s" % (errMsg, txt, realResult, result, template))
 
-	def testOneVarDoesExist (self):
-		self._runTest_ ('<html tal:condition="exists:top">Top</html>'
-					   ,'<html>Top</html>'
-					   ,'Exists check on single variable failed.'
-					   )
-					   
-	def testOneVarDoesNotExist (self):
-		self._runTest_ ('<html tal:condition="exists:nosuchvar">Top</html>'
-					   ,''
-					   ,'Exists check on single variable that does not exist failed.'
-					   )
-					   
-	def testTwoVarDoesExist (self):
-		self._runTest_ ('<html tal:condition="exists:nosuchvar | exists:top">Top</html>'
-					   ,'<html>Top</html>'
-					   ,'Exists check on two variables failed.'
-					   )
-					   
-	def testTwoVarDoesNotExist (self):
-		self._runTest_ ('<html tal:condition="exists:nosuchvar | exists:nosuchvar2">Top</html>'
-					   ,''
-					   ,'Exists check on two variables that dont exist failed.'
-					   )
-					   
-	def testOneFuncExist (self):
-		self._runTest_ ('<html tal:condition="exists:topFunc">Top</html>'
-					   ,'<html>Top</html>'
-					   ,'Exists check on one function failed.'
+	def testNormalTree (self):
+		self._runTest_ ("""<html tal:content="xml/title">Exists</html>"""
+					   ,'<html>This is a test</html>'
+					   ,'Simple Element Tree test failed.'
+					   ,allowPythonPath=1
 					   )
 		
-	def testTwoFuncExist (self):
-		self._runTest_ ('<html tal:condition="exists:nosuchvar | exists:topFunc">Top</html>'
-					   ,'<html>Top</html>'
-					   ,'Exists check on two function failed.'
-					   )					   
-					   
-	def testNothingExists (self):
-		self._runTest_ ('<html tal:condition=exists:nothing>Top</html>'
-					   ,'<html>Top</html>'
-					   ,'Nothing should exist!'
-					   )					   
-		
-
-if __name__ == '__main__':
-	unittest.main()
-
+	def testPythonPathTree (self):
+		self._runTest_ ("""<html tal:content="python:path ('xml/title')">Exists</html>"""
+					   ,'<html>This is a test</html>'
+					   ,'Python path use of Element Tree failed.'
+					   ,allowPythonPath=1
+					   )

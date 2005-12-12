@@ -1,6 +1,6 @@
 """ simpleTALUtils
 
-		Copyright (c) 2004 Colin Stewart (http://www.owlfish.com/)
+		Copyright (c) 2005 Colin Stewart (http://www.owlfish.com/)
 		All rights reserved.
 		
 		Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 		Module Dependencies: None
 """
 
-import StringIO, os, stat, threading, sys, codecs, sgmllib, cgi, re
+import StringIO, os, stat, threading, sys, codecs, sgmllib, cgi, re, types
 import simpletal, simpleTAL
 
 __version__ = simpletal.__version__
@@ -56,11 +56,11 @@ class HTMLStructureCleaner (sgmllib.SGMLParser):
 				The method returns a unicode string which is suitable for addition to a
 				simpleTALES.Context object.
 		"""
-		if (type (content) == type ("")):
+		if (isinstance (content, types.StringType)):
 			# Not unicode, convert
 			converter = codecs.lookup (encoding)[1]
 			file = StringIO.StringIO (converter (content)[0])
-		elif (type (content) == type (u"")):
+		elif (isinstance (content, types.UnicodeType)):
 			file = StringIO.StringIO (content)
 		else:
 			# Treat it as a file type object - and convert it if we have an encoding
@@ -216,13 +216,13 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 		
 	def cmdOutputStartTag (self, command, args):
 		newAtts = []
-		for att in self.originalAttributes:
-			if (self.macroArg is not None and att[0] == "metal:define-macro"):
+		for att, value in self.originalAttributes.items():
+			if (self.macroArg is not None and att == "metal:define-macro"):
 				newAtts.append (("metal:use-macro",self.macroArg))
-			elif (self.inMacro and att[0]=="metal:define-slot"):
-				newAtts.append (("metal:fill-slot", att[1]))
+			elif (self.inMacro and att=="metal:define-slot"):
+				newAtts.append (("metal:fill-slot", value))
 			else:
-				newAtts.append (att)
+				newAtts.append ((att, value))
 		self.macroArg = None
 		self.currentAttributes = newAtts
 		simpleTAL.TemplateInterpreter.cmdOutputStartTag (self, command, args)
@@ -251,16 +251,16 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 					# End of the macro
 					self.inMacro = 0
 				else:
-					if (type (resultVal) == type (u"")):
+					if (isinstance (resultVal, types.UnicodeType)):
 						self.file.write (resultVal)
-					elif (type (resultVal) == type ("")):
+					elif (isinstance (resultVal, types.StringType)):
 						self.file.write (unicode (resultVal, 'ascii'))
 					else:
 						self.file.write (unicode (str (resultVal), 'ascii'))
 			else:
-				if (type (resultVal) == type (u"")):
+				if (isinstance (resultVal, types.UnicodeType)):
 					self.file.write (cgi.escape (resultVal))
-				elif (type (resultVal) == type ("")):
+				elif (isinstance (resultVal, types.StringType)):
 					self.file.write (cgi.escape (unicode (resultVal, 'ascii')))
 				else:
 					self.file.write (cgi.escape (unicode (str (resultVal), 'ascii')))
@@ -275,7 +275,7 @@ class MacroExpansionInterpreter (simpleTAL.TemplateInterpreter):
 		if (self.localVarsDefined):
 			self.context.popLocals()
 			
-		self.movePCForward,self.movePCBack,self.outputTag,self.originalAttributes,self.currentAttributes,self.repeatVariable,self.repeatIndex,self.repeatSequence,self.tagContent,self.localVarsDefined = self.scopeStack.pop()			
+		self.movePCForward,self.movePCBack,self.outputTag,self.originalAttributes,self.currentAttributes,self.repeatVariable,self.tagContent,self.localVarsDefined = self.scopeStack.pop()			
 		self.programCounter += 1
 			
 def ExpandMacros (context, template, outputEncoding="ISO-8859-1"):

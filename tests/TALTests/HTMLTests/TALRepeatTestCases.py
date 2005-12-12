@@ -93,7 +93,7 @@ class TALRepeatTestCases (unittest.TestCase):
 
 	def testAttributesInRepeat (self):
 		self._runTest_ ('<html><p tal:repeat="words nested" tal:content="words/title" tal:attributes="selected words/selected" selected></p></html>'
-						 ,'<html><p>Image 1</p><p selected="">Image 2</p><p>Image 3</p></html>'
+						 ,'<html><p>Image 1</p><p selected="selected">Image 2</p><p>Image 3</p></html>'
 						 ,'Accessing attributes in repeat loop failed.')
 						 
 	def testDefaultInContentInRepeat (self):
@@ -110,6 +110,12 @@ class TALRepeatTestCases (unittest.TestCase):
 		self._runTest_ ('<html><p tal:repeat="image nested"><h2 tal:content="image/title"></h2><b tal:omit-tag tal:repeat="category image/catList"><i tal:content="category"></i></b></p></html>'
 					   ,'<html><p><h2>Image 1</h2><i>1</i><i>2</i><i>3</i></p><p><h2>Image 2</h2><i>5</i><i>2</i><i>3</i></p><p><h2>Image 3</h2><i>8</i><i>9</i><i>1</i></p></html>'
 					   ,'Nested repeat did not create expected outcome.'
+					   )
+					   
+	def testNestedRepeatClasses (self):
+		self._runTest_ ('<html><p class="outerClass" tal:repeat="image nested"><div class="innerClass" tal:repeat="category image/catList"><i tal:content="category"></i></div></p></html>'
+					   ,'<html><p class="outerClass"><div class="innerClass"><i>1</i></div><div class="innerClass"><i>2</i></div><div class="innerClass"><i>3</i></div></p><p class="outerClass"><div class="innerClass"><i>5</i></div><div class="innerClass"><i>2</i></div><div class="innerClass"><i>3</i></div></p><p class="outerClass"><div class="innerClass"><i>8</i></div><div class="innerClass"><i>9</i></div><div class="innerClass"><i>1</i></div></p></html>'
+					   ,'Nested repeat with classes did not create expected outcome.'
 					   )
 					   
 	def testNestedRepeatScope (self):
