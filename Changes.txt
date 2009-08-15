@@ -1,9 +1,13 @@
-simpleTAL / simpleTALES (Version 4.3)
+simpleTAL / simpleTALES (Version 5.0)
 -------------------------------------
 
-Version 4.3
+Version 5.0
 -----------
-Back-ported fix from 5.1 - missing XML files from ElementTree example.
+NOTE: This version of SimpleTAL is for Python 3.1 and later.  For Python 2.x. support please use SimpleTAL version 4.2.
+
+New features:
+
+ - Ported from Python 2.6 to Python 3.1
 
 Version 4.2
 -----------
