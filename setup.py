@@ -12,6 +12,7 @@ setup(name="SimpleTAL",
 	author="Colin Stewart",
 	author_email="colin@owlfish.com",
 	url="http://www.owlfish.com/software/simpleTAL/index.html",
+	download_url="http://www.owlfish.com/software/simpleTAL/py2compatible/download.html",
 	packages=[
 		'simpletal',
 	],
